@@ -1,0 +1,41 @@
+{
+  "name": "pi-session-name",
+  "version": "0.1.0",
+  "description": "pi extension package that auto-generates a concise session title from the first user prompt.",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "extension",
+    "session",
+    "naming",
+    "title"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ttttmr/pi-session-name.git"
+  },
+  "homepage": "https://github.com/ttttmr/pi-session-name#readme",
+  "bugs": {
+    "url": "https://github.com/ttttmr/pi-session-name/issues"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "package.json"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@mariozechner/pi-ai": "^0.68.1",
+    "@mariozechner/pi-coding-agent": "^0.68.1",
+    "vitest": "^3.2.4"
+  }
+}
