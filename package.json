@@ -1,6 +1,6 @@
 {
   "name": "pi-session-name",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "pi extension package that auto-generates a concise session title from the first user prompt.",
   "type": "module",
   "keywords": [

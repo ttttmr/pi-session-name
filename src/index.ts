@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { completeSimple } from "@mariozechner/pi-ai";
 
 const TITLE_PROMPT = [
@@ -11,9 +11,31 @@ const TITLE_PROMPT = [
   "Keep it concise.",
 ].join("\n");
 
+function formatTitle(ctx: ExtensionContext, sessionName: string, isRunning: boolean) {
+  const prefix = isRunning ? "·" : "✳";
+  return `${prefix} ${sessionName} - ${path.basename(ctx.cwd)}`;
+}
+
 export default function (pi: ExtensionAPI) {
   let firstPrompt: string | null = null;
   let started = false;
+  let isRunning = false;
+
+  function syncTitle(ctx: ExtensionContext) {
+    const sessionName = pi.getSessionName();
+    if (!sessionName) return;
+    ctx.ui.setTitle(formatTitle(ctx, sessionName, isRunning));
+  }
+
+  pi.on("agent_start", async (_event, ctx) => {
+    isRunning = true;
+    syncTitle(ctx);
+  });
+
+  pi.on("agent_end", async (_event, ctx) => {
+    isRunning = false;
+    syncTitle(ctx);
+  });
 
   pi.on("input", async (event, ctx) => {
     if (pi.getSessionName()) return;
@@ -47,7 +69,7 @@ export default function (pi: ExtensionAPI) {
           if (!part) return;
 
           pi.setSessionName(part.text);
-          ctx.ui.setTitle(`π - ${part.text} - ${path.basename(ctx.cwd)}`);
+          syncTitle(ctx);
           return;
         } catch { }
       }

@@ -20,13 +20,13 @@ describe("pi-session-name", () => {
         content: [{ type: "text", text: "first title" }],
       } as any);
 
-    let inputHandler: ((event: any, ctx: any) => Promise<unknown>) | undefined;
+    const handlers: Record<string, ((event: any, ctx: any) => Promise<unknown>) | undefined> = {};
     let sessionName: string | undefined;
     const setTitle = vi.fn();
 
     const pi = {
       on: vi.fn((event: string, handler: (event: any, ctx: any) => Promise<unknown>) => {
-        if (event === "input") inputHandler = handler;
+        handlers[event] = handler;
       }),
       getSessionName: vi.fn(() => sessionName),
       setSessionName: vi.fn((name: string) => {
@@ -45,8 +45,8 @@ describe("pi-session-name", () => {
       cwd: "/tmp/demo",
     };
 
-    await inputHandler?.({ text: "first prompt" }, ctx);
-    await inputHandler?.({ text: "second prompt" }, ctx);
+    await handlers.input?.({ text: "first prompt" }, ctx);
+    await handlers.input?.({ text: "second prompt" }, ctx);
 
     await vi.waitFor(() => {
       expect(completeSimpleMock).toHaveBeenCalledTimes(3);
@@ -58,6 +58,50 @@ describe("pi-session-name", () => {
       "first prompt",
     ]);
     expect(pi.setSessionName).toHaveBeenCalledWith("first title");
-    expect(setTitle).toHaveBeenCalledWith("π - first title - demo");
+    expect(setTitle).toHaveBeenCalledWith("✳ first title - demo");
+  });
+
+  it("updates the title prefix based on agent running state", async () => {
+    vi.mocked(completeSimple).mockResolvedValue({
+      content: [{ type: "text", text: "run title" }],
+    } as any);
+
+    const handlers: Record<string, ((event: any, ctx: any) => Promise<unknown>) | undefined> = {};
+    let sessionName: string | undefined;
+    const setTitle = vi.fn();
+
+    const pi = {
+      on: vi.fn((event: string, handler: (event: any, ctx: any) => Promise<unknown>) => {
+        handlers[event] = handler;
+      }),
+      getSessionName: vi.fn(() => sessionName),
+      setSessionName: vi.fn((name: string) => {
+        sessionName = name;
+      }),
+    };
+
+    extension(pi as any);
+
+    const ctx = {
+      model: { headers: {}, id: "test-model", provider: "test" },
+      modelRegistry: {
+        getApiKeyAndHeaders: vi.fn().mockResolvedValue({ ok: true, apiKey: "test-key", headers: {} }),
+      },
+      ui: { setTitle },
+      cwd: "/tmp/demo",
+    };
+
+    await handlers.agent_start?.({}, ctx);
+    await handlers.input?.({ text: "first prompt" }, ctx);
+
+    await vi.waitFor(() => {
+      expect(pi.setSessionName).toHaveBeenCalledWith("run title");
+    });
+
+    expect(setTitle).toHaveBeenLastCalledWith("· run title - demo");
+
+    await handlers.agent_end?.({}, ctx);
+
+    expect(setTitle).toHaveBeenLastCalledWith("✳ run title - demo");
   });
 });

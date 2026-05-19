@@ -8,7 +8,7 @@ A tiny pi package that auto-generates a short session title from the first user 
 - generates a concise title in the user's language with the active pi model
 - retries up to 3 times **using that same first input only**
 - never overwrites an existing session name
-- updates the terminal title to `π - <session name> - <cwd>`
+- updates the terminal title to `· <session name> - <cwd>` while running and `✳ <session name> - <cwd>` when idle
 
 ## Behavior details
 
