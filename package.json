@@ -1,7 +1,7 @@
 {
   "name": "pi-session-name",
   "version": "0.1.1",
-  "description": "pi extension package that auto-generates a concise session title from the first user prompt.",
+  "description": "pi extension that auto-generates a concise session title from the first user prompt and shows agent running/idle status in the terminal title.",
   "type": "module",
   "keywords": [
     "pi-package",
@@ -23,6 +23,7 @@
   "files": [
     "src",
     "README.md",
+    "LICENSE",
     "package.json"
   ],
   "pi": {
