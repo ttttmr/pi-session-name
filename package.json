@@ -1,6 +1,6 @@
 {
   "name": "pi-session-name",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "pi extension that auto-generates a concise session title from the first user prompt and shows agent running/idle status in the terminal title.",
   "type": "module",
   "keywords": [
@@ -14,7 +14,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ttttmr/pi-session-name.git"
+    "url": "git+https://github.com/ttttmr/pi-session-name.git"
   },
   "homepage": "https://github.com/ttttmr/pi-session-name#readme",
   "bugs": {
