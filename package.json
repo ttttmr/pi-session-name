@@ -1,6 +1,6 @@
 {
   "name": "pi-session-name",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "pi extension that auto-generates a concise session title from the first user prompt and shows agent running/idle status in the terminal title.",
   "type": "module",
   "keywords": [
@@ -35,8 +35,8 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@mariozechner/pi-ai": "^0.68.1",
-    "@mariozechner/pi-coding-agent": "^0.68.1",
+    "@earendil-works/pi-ai": "^0.85.1",
+    "@earendil-works/pi-coding-agent": "^0.85.1",
     "vitest": "^3.2.4"
   }
 }
