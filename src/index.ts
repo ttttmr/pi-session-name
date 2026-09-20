@@ -1,14 +1,16 @@
 import path from "node:path";
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import type { Model, ThinkingLevel } from "@earendil-works/pi-ai";
+import type { Api, Model, ThinkingLevel } from "@earendil-works/pi-ai";
+
+const MAX_TITLE_CHARACTERS = 60;
 
 const TITLE_PROMPT = [
-  "Generate a short session title for this coding task.",
+  "Generate a short session title describing the user’s task. Do not answer the task.",
   "Return only the title.",
   "Keep the user's language.",
   "No quotes. No trailing punctuation.",
-  "Keep it concise.",
+  `Use one plain-text line of at most ${MAX_TITLE_CHARACTERS} characters. No Markdown.`,
 ].join("\n");
 
 function formatTitle(ctx: ExtensionContext, sessionName: string, isRunning: boolean) {
@@ -18,7 +20,7 @@ function formatTitle(ctx: ExtensionContext, sessionName: string, isRunning: bool
 
 // opencode-zen/go refuses requests without a session header (400 MissingSessionID).
 // The agent path injects it via attribution headers; side calls must add it themselves.
-function opencodeSessionHeaders(model: Model<any>, sessionId: string | undefined) {
+function opencodeSessionHeaders(model: Model<Api>, sessionId: string | undefined) {
   if (!sessionId) return undefined;
   let isOpencode = model.provider === "opencode" || model.provider === "opencode-go";
   if (!isOpencode) {
@@ -30,11 +32,13 @@ function opencodeSessionHeaders(model: Model<any>, sessionId: string | undefined
   return { "x-opencode-session": sessionId, "x-opencode-client": "pi" };
 }
 
-// Models don't always obey "one line, no quotes": keep the first non-empty
-// line and strip wrapping quotes.
+// Reject malformed output rather than turning the first line of an answer into
+// a permanent session name. Quotes around an otherwise valid title are harmless.
 function sanitizeTitle(text: string) {
-  const line = text.split("\n").find(l => l.trim().length > 0) ?? "";
-  return line.trim().replace(/^["'“”‘’`]+|["'“”‘’`]+$/g, "").trim();
+  const raw = text.trim();
+  if (/[\u0000-\u001f\u007f\u2028\u2029]/u.test(raw) || /\*\*|__|```|^#{1,6}\s/u.test(raw)) return "";
+  const title = raw.replace(/^["'“”‘’`]+|["'“”‘’`]+$/g, "").trim();
+  return Array.from(title).length <= MAX_TITLE_CHARACTERS ? title : "";
 }
 
 export default function (pi: ExtensionAPI) {
@@ -69,26 +73,15 @@ export default function (pi: ExtensionAPI) {
       const model = ctx.model;
       if (!model) return;
 
-      // The composed provider's streamSimple dispatches to the right
-      // implementation — built-in API adapter or extension-registered custom
-      // stream (e.g. devin) — and maps `reasoning` to per-API thinking options.
-      const provider = ctx.modelRegistry.getProvider(model.provider);
-      if (!provider) return;
-
-      const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
-      if (!auth.ok) return;
-
-      const headers = {
-        ...opencodeSessionHeaders(model, ctx.sessionManager?.getSessionId?.()),
-        ...(model.headers ?? {}),
-        ...(auth.headers ?? {}),
-      };
-      const requestModel = auth.baseUrl ? { ...model, baseUrl: auth.baseUrl } : model;
+      // Use the public registry entry point: it normalizes systemPrompt into
+      // transcript messages before dispatching to built-in or custom providers,
+      // and resolves configured authentication, headers, base URL, and env.
+      const headers = opencodeSessionHeaders(model, ctx.sessionManager?.getSessionId?.());
 
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          const response = await provider.streamSimple(
-            requestModel,
+          const response = await ctx.modelRegistry.streamSimple(
+            model,
             {
               systemPrompt: TITLE_PROMPT,
               messages: [{ role: "user", content: firstPrompt, timestamp: Date.now() }],
@@ -101,19 +94,19 @@ export default function (pi: ExtensionAPI) {
               // max_output_tokens outright.
               maxTokens: 2048,
               reasoning: "off" as ThinkingLevel,
-              apiKey: auth.apiKey,
               headers,
-              env: auth.env,
             },
           ).result();
 
-          // Stream errors resolve as messages with stopReason "error".
-          if (response.stopReason === "error") continue;
+          // Do not commit errors, aborted responses, or token-truncated titles.
+          if (response.stopReason !== "stop") continue;
 
-          const part = response.content.toReversed().find(part => part.type === "text");
-          const title = part ? sanitizeTitle(part.text) : "";
+          const text = response.content.flatMap(part => part.type === "text" ? [part.text] : []).join("\n");
+          const title = sanitizeTitle(text);
           if (!title) continue;
 
+          // A manual rename may have happened while the request was in flight.
+          if (pi.getSessionName()) return;
           pi.setSessionName(title);
           syncTitle(ctx);
           return;

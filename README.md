@@ -11,6 +11,7 @@ A pi extension that auto-generates a concise, meaningful session title from the 
 
 - Captures the **first** user input in a session and freezes it as the title source
 - Generates a short title in the user's language using the active pi model
+- Rejects multiline, over-60-character, and Markdown-formatted output instead of saving an answer as the title
 - Retries up to 3 times, **always with only the original first input**
 - Never overwrites an already-set session name
 - Updates the terminal title in real time:
@@ -30,6 +31,8 @@ The extension listens for `input`, `agent_start`, and `agent_end` events:
 **Failure modes**: if no model is selected, no API key is available, or all 3 attempts fail, the session simply stays unnamed — no error, no noise.
 
 ## Install
+
+Requires pi 0.86.0 or newer (uses the public model registry streaming API).
 
 ### From npm (global)
 
