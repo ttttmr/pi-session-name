@@ -114,9 +114,11 @@ describe("pi-session-name", () => {
     });
 
     const request = streamSimple.mock.calls[0][1];
-    expect(request.systemPrompt).toContain("labels the user's task; write a title, not a reply");
-    expect(request.systemPrompt).toContain("Never address the user, ask a question");
-    expect(request.systemPrompt).toContain("Extract the core goal");
+    expect(request.systemPrompt).toContain("concise, searchable title for the user's first message");
+    expect(request.systemPrompt).toContain("main goal and key subject");
+    expect(request.systemPrompt).toContain("preserving important names and intended action");
+    expect(request.systemPrompt).toContain("Label the task rather than answering it.");
+    expect(request.systemPrompt).toContain("no explanation, quotes, Markdown, or trailing punctuation");
     expect(request.messages[0].content).toBe("Could you help me improve how session titles are generated?");
   });
 

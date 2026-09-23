@@ -4,12 +4,10 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import type { Model, ThinkingLevel } from "@earendil-works/pi-ai";
 
 const TITLE_PROMPT = [
-  "Generate a concise title that labels the user's task; write a title, not a reply.",
-  "Extract the core goal from the user's input instead of repeating its conversational wording.",
-  "Use a compact noun phrase or action phrase. Never address the user, ask a question, or add conversational framing (such as 'I can help' or 'Here is').",
-  "Keep the user's language and focus on the main goal.",
-  "Return only the title, usually 3–8 words or the natural equivalent in that language.",
-  "No quotes. No trailing punctuation.",
+  "Generate a concise, searchable title for the user's first message.",
+  "Summarize the main goal and key subject in the user's language, preserving important names and intended action.",
+  "Label the task rather than answering it.",
+  "Return only a compact noun or action phrase, usually 3–8 words or the natural equivalent, with no explanation, quotes, Markdown, or trailing punctuation.",
 ].join("\n");
 
 function formatTitle(ctx: ExtensionContext, sessionName: string, isRunning: boolean) {
