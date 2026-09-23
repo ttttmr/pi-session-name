@@ -100,6 +100,26 @@ describe("pi-session-name", () => {
     expect(ctx.ui.setTitle).toHaveBeenLastCalledWith("✳ run title - demo");
   });
 
+  it("asks for a task label rather than a conversational reply", async () => {
+    const streamSimple = vi.fn().mockImplementation(respond("Fix session title generation"));
+
+    const { handlers, pi } = makePi();
+    const ctx = makeCtx(streamSimple);
+    extension(pi as any);
+
+    await handlers.input?.({ text: "Could you help me improve how session titles are generated?" }, ctx);
+
+    await vi.waitFor(() => {
+      expect(pi.setSessionName).toHaveBeenCalledWith("Fix session title generation");
+    });
+
+    const request = streamSimple.mock.calls[0][1];
+    expect(request.systemPrompt).toContain("labels the user's task; write a title, not a reply");
+    expect(request.systemPrompt).toContain("Never address the user, ask a question");
+    expect(request.systemPrompt).toContain("Extract the core goal");
+    expect(request.messages[0].content).toBe("Could you help me improve how session titles are generated?");
+  });
+
   it("retries when the stream resolves with an error message", async () => {
     const streamSimple = vi.fn()
       .mockImplementationOnce(() => ({
