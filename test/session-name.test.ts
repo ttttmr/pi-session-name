@@ -70,11 +70,22 @@ describe("pi-session-name", () => {
       expect(streamSimple).toHaveBeenCalledTimes(3);
     });
 
-    expect(streamSimple.mock.calls.map(([, request]) => request.messages[0].content)).toEqual([
+    expect(
+      streamSimple.mock.calls.map(([, request]) => {
+        const userMsg = request.messages.find((m: any) => m.role === "user");
+        return userMsg?.content;
+      })
+    ).toEqual([
       "first prompt",
       "first prompt",
       "first prompt",
     ]);
+    expect(
+      streamSimple.mock.calls.every(([, request]) => {
+        const sysMsg = request.messages.find((m: any) => m.role === "system");
+        return sysMsg?.content.includes("concise, searchable title");
+      })
+    ).toBe(true);
     expect(pi.setSessionName).toHaveBeenCalledWith("first title");
     expect(ctx.ui.setTitle).toHaveBeenCalledWith("✳ first title - demo");
   });
@@ -119,7 +130,10 @@ describe("pi-session-name", () => {
     expect(request.systemPrompt).toContain("preserving important names and intended action");
     expect(request.systemPrompt).toContain("Label the task rather than answering it.");
     expect(request.systemPrompt).toContain("no explanation, quotes, Markdown, or trailing punctuation");
-    expect(request.messages[0].content).toBe("Could you help me improve how session titles are generated?");
+    const userMsg = request.messages.find((m: any) => m.role === "user");
+    expect(userMsg?.content).toBe("Could you help me improve how session titles are generated?");
+    const sysMsg = request.messages.find((m: any) => m.role === "system");
+    expect(sysMsg?.content).toContain("Label the task rather than answering it.");
   });
 
   it("retries when the stream resolves with an error message", async () => {

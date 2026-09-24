@@ -90,8 +90,11 @@ export default function (pi: ExtensionAPI) {
             requestModel,
             {
               systemPrompt: TITLE_PROMPT,
-              messages: [{ role: "user", content: firstPrompt, timestamp: Date.now() }],
-            },
+              messages: [
+                { role: "system", content: TITLE_PROMPT, timestamp: 0 },
+                { role: "user", content: firstPrompt, timestamp: Date.now() },
+              ],
+            } as any,
             {
               // Reasoning models can burn a small cap on thinking before
               // emitting text; keep room for a short title after it. "off"
