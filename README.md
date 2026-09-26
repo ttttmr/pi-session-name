@@ -10,6 +10,7 @@ A pi extension that auto-generates a concise, meaningful session title from the 
 ## What it does
 
 - Captures the **first** user input in a session and freezes it as the title source
+- Passes it in a JSON `originalUserInput` field so the model can distinguish source text from instructions
 - Generates a concise task-label title in the user's language using the active pi model (not a conversational reply)
 - Retries up to 3 times, **always with only the original first input**
 - Never overwrites an already-set session name
